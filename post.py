@@ -78,18 +78,27 @@ def create_and_publish(token, image_url, story, caption=""):
         raise SystemExit("container create fail")
     for _ in range(20):
         s = requests.get(f"{API}/{cid}", params={"fields": "status_code", "access_token": token}, timeout=60).json()
+        print("status:", s)
         if s.get("status_code") == "FINISHED":
             break
         time.sleep(5)
-    r = requests.post(f"{API}/{uid}/media_publish", data={"creation_id": cid, "access_token": token}, timeout=60)
-    r.raise_for_status()
-    print("published", "story" if story else "post", r.json())
+    for _ in range(5):  # publish retry + poora error message print
+        r = requests.post(f"{API}/{uid}/media_publish", data={"creation_id": cid, "access_token": token}, timeout=60)
+        if r.ok:
+            print("published", "story" if story else "post", r.json())
+            return
+        print("publish retry:", r.status_code, r.text)
+        time.sleep(15)
+    raise SystemExit("publish fail")
 
 
 def publish(n):
     token = os.environ["IG_TOKEN"]
-    create_and_publish(token, raw_url(f"day{n}_post.jpg"), False, CAPTION)
-    create_and_publish(token, raw_url(f"day{n}_story.jpg"), True)
+    only = (os.environ.get("ONLY") or "both").strip()  # both / post / story
+    if only in ("both", "post"):
+        create_and_publish(token, raw_url(f"day{n}_post.jpg"), False, CAPTION)
+    if only in ("both", "story"):
+        create_and_publish(token, raw_url(f"day{n}_story.jpg"), True)
 
 
 def refresh():
