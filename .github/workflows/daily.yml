@@ -1,7 +1,7 @@
 name: Daily Instagram Day post
 on:
   schedule:
-    - cron: "34 17 * * *"
+    - cron: "34 17 * * *"   # 11:04 PM IST
   workflow_dispatch:
 permissions:
   contents: write
