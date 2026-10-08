@@ -1,33 +1,40 @@
 name: Daily Instagram Day post
 on:
   schedule:
-    - cron: "34 17 * * *"   # 11:04 PM IST
+    - cron: "17 12 * * *"   # 5:47 PM IST - jaldi shuru, script 11:04 PM tak ruk ke post karti hai
+    - cron: "47 13 * * *"   # 7:17 PM IST - backup
+    - cron: "47 15 * * *"   # 9:17 PM IST - backup
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry = sirf check (post nahi hoga) | now = abhi post karo"
+        type: choice
+        default: "dry"
+        options:
+          - dry
+          - now
 permissions:
   contents: write
+concurrency:
+  group: daily-${{ github.event_name }}
+  cancel-in-progress: false
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install pillow requests
-      - name: Make images
-        run: python post.py make
-      - name: Commit images
-        run: |
-          git config user.name "bot"
-          git config user.email "bot@users.noreply.github.com"
-          git add out
-          git commit -m "daily images" || true
-          git push
       - name: Post + Story
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
-        run: python post.py publish
+          MODE: ${{ inputs.mode }}
+        run: python post.py run
       - name: Refresh token
+        if: always()
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
