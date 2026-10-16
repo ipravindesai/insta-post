@@ -31,8 +31,36 @@ def day_key():
     return (now() - dt.timedelta(hours=6)).date()
 
 
+SETTINGS_FILE = "settings.txt"
+
+
+def load_settings():
+    """settings.txt padhta hai. Nahi mili to upar wale START_DATE / START_DAY chalte hain."""
+    cfg = {"DAY_DATE": START_DATE, "DAY_NUMBER": START_DAY, "PAUSE_UNTIL": None}
+    if not os.path.exists(SETTINGS_FILE):
+        return cfg
+    for raw in open(SETTINGS_FILE, encoding="utf-8"):
+        line = raw.split("#")[0].strip()
+        if not line:
+            continue
+        if "=" not in line:
+            raise SystemExit(f"settings.txt me galat line: {raw.strip()}")
+        k, v = [x.strip() for x in line.split("=", 1)]
+        k = k.upper()
+        if k not in cfg:
+            raise SystemExit(f"settings.txt me anjaan naam: {k}")
+        if not v:
+            continue
+        try:
+            cfg[k] = int(v) if k == "DAY_NUMBER" else dt.date.fromisoformat(v)
+        except ValueError:
+            raise SystemExit(f"settings.txt me galat value: {k}={v}  (date aise likho: 2026-10-17)")
+    return cfg
+
+
 def today_day():
-    return START_DAY + (day_key() - START_DATE).days
+    c = load_settings()
+    return c["DAY_NUMBER"] + (day_key() - c["DAY_DATE"]).days
 
 
 # ---------- image ----------
@@ -177,6 +205,10 @@ def run():
     mode = (os.environ.get("MODE") or "auto").strip()  # auto / now / dry
     key, n = str(day_key()), today_day()
     print(f"Day {n} | din {key} | mode {mode} | abhi {now():%Y-%m-%d %H:%M:%S} IST")
+    pause = load_settings()["PAUSE_UNTIL"]
+    if mode == "auto" and pause and day_key() < pause:
+        print(f"PAUSE: {pause} se pehle kuch post nahi hoga (settings.txt). Skip.")
+        return
     check_token(token)
     st = load_state()
     if st.get("post") == key and st.get("story") == key:

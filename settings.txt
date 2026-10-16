@@ -1,0 +1,10 @@
+# ===== DAY SETTINGS (GitHub me pencil dabake kabhi bhi badal sakte ho) =====
+
+# Jis raat 11:04 ko post hona hai us raat ki tarikh (YYYY-MM-DD) aur us din ka Day number.
+# Uske baad har din apne aap +1 hota jayega.
+DAY_DATE=2026-10-17
+DAY_NUMBER=83
+
+# PAUSE: yahan tarikh likhoge to us tarikh se PEHLE kuch post nahi hoga.
+# Khali chhodo = pause nahi.
+PAUSE_UNTIL=2026-10-17
